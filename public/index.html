@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DSA Practice Tracker — Full Interactive Plan</title>
+  <!-- SEO Meta tags -->
+  <meta name="description" content="A premium full-stack DSA Practice Tracker to organize, schedule, and log solution codes for LeetCode problems, backed by MongoDB.">
+  <meta name="keywords" content="DSA, Data Structures, Algorithms, Practice Tracker, LeetCode, Study Plan">
+  <!-- Google Fonts: Inter and Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  
+  <!-- Loading Spinner Overlay -->
+  <div class="loader-overlay" id="loaderOverlay">
+    <div class="spinner"></div>
+    <div class="loader-text">Syncing with MongoDB...</div>
+  </div>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">DSA Tracker</span>
+      </div>
+      <div class="nav-auth" id="navAuth">
+        <!-- Dynamic User Profile Info -->
+      </div>
+    </div>
+  </nav>
+
+  <div class="wrap">
+    
+    <!-- AUTH PANEL (Shown when logged out) -->
+    <div class="auth-card" id="authCard">
+      <div class="auth-header">
+        <h2 class="active" id="tabLogin" onclick="switchAuthTab('login')">Sign In</h2>
+        <h2 id="tabRegister" onclick="switchAuthTab('register')">Create Account</h2>
+      </div>
+      <div class="auth-body">
+        <form id="authForm" onsubmit="handleAuthSubmit(event)">
+          <div class="field">
+            <label for="authUsername">Username</label>
+            <input type="text" id="authUsername" required placeholder="Enter username" minlength="3">
+          </div>
+          <div class="field">
+            <label for="authPassword">Password</label>
+            <input type="password" id="authPassword" required placeholder="••••••••" minlength="6">
+          </div>
+          <div class="error-msg" id="authError"></div>
+          <button class="btn primary full-width" type="submit" id="authSubmitBtn">Sign In</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- MAIN APPLICATION WORKSPACE (Shown when logged in) -->
+    <div class="app-workspace" id="appWorkspace" style="display: none;">
+      
+      <!-- HERO & PLAN INTRO -->
+      <header class="app-header">
+        <h1 class="glow-text">Your DSA Roadmap</h1>
+        <div class="sub">Auto-scheduled dates, timers, notes, and solutions synced in real time.</div>
+      </header>
+
+      <!-- ALERT/NOTIFICATION BOX -->
+      <div class="alert-box" id="alertBox"></div>
+
+      <!-- PLAN SUMMARY / STATS PANEL -->
+      <div class="panel" id="summaryPanel">
+        <div class="panel-title">Your Progress Dashboard</div>
+        <div class="summary-grid">
+          <div class="summary-box">
+            <div class="num" id="sumRemaining">-</div>
+            <div class="lbl">Problems Left</div>
+          </div>
+          <div class="summary-box">
+            <div class="num" id="sumHours">-</div>
+            <div class="lbl">Est. Hours Left</div>
+          </div>
+          <div class="summary-box">
+            <div class="num" id="sumDays">-</div>
+            <div class="lbl">Days Needed</div>
+          </div>
+          <div class="summary-box finish">
+            <div class="num" id="sumFinish">-</div>
+            <div class="lbl">Projected Finish</div>
+          </div>
+        </div>
+        <div class="progress-bar-outer">
+          <div class="progress-bar-inner" id="progressBar"></div>
+        </div>
+        <div class="progress-text" id="progressText">0 / 0 solved</div>
+      </div>
+
+      <!-- MAIN TABS CONTROL -->
+      <div class="tab-control">
+        <button class="tab-btn active" id="tabBtnTracker" onclick="switchView('tracker')">📅 Study Tracker</button>
+        <button class="tab-btn" id="tabBtnAddProblem" onclick="switchView('add-problem')">➕ Custom Problem</button>
+        <button class="tab-btn" id="tabBtnSettings" onclick="switchView('settings')">⚙️ Plan Settings</button>
+      </div>
+
+      <!-- VIEW: STUDY TRACKER -->
+      <section class="tab-view active" id="viewTracker">
+        <!-- Top Actions Bar -->
+        <div class="top-bar">
+          <button class="btn primary" id="notifyBtn">🔔 Enable Desktop Alerts</button>
+          <button class="btn" id="checkNowBtn">⏰ Check Reminders Now</button>
+          <button class="btn" id="exportBtn">📥 Export Progress (JSON)</button>
+          <button class="btn" id="importBtn">📤 Import Progress</button>
+          <button class="btn danger" id="resetBtn">⚠️ Reset Profile</button>
+          <input type="file" id="importFile" accept=".json" style="display:none">
+        </div>
+        <!-- Weeks Container -->
+        <div id="weeks"></div>
+      </section>
+
+      <!-- VIEW: ADD CUSTOM PROBLEM -->
+      <section class="tab-view" id="viewAddProblem">
+        <div class="panel">
+          <div class="panel-title">Add Custom Practice Problem</div>
+          <form id="customProblemForm" onsubmit="handleAddCustomProblem(event)">
+            <div class="form-grid">
+              <div class="field">
+                <label for="customWeek">Target Week Section</label>
+                <select id="customWeek" required>
+                  <option value="Week 1: Arrays, Two Pointers, Sliding Window">Week 1: Arrays, Two Pointers, Sliding Window</option>
+                  <option value="Week 1-2: Hashing & Stack">Week 1-2: Hashing & Stack</option>
+                  <option value="Week 2: Linked Lists">Week 2: Linked Lists</option>
+                  <option value="Week 2-3: Binary Search">Week 2-3: Binary Search</option>
+                  <option value="Week 3: Trees">Week 3: Trees</option>
+                  <option value="Week 3-4: Heaps & Backtracking">Week 3-4: Heaps & Backtracking</option>
+                  <option value="Week 4-5: Graphs">Week 4-5: Graphs</option>
+                  <option value="Week 5-7: Dynamic Programming">Week 5-7: Dynamic Programming</option>
+                  <option value="Week 7: Greedy & Intervals">Week 7: Greedy & Intervals</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="customCategory">Category Name</label>
+                <input type="text" id="customCategory" required placeholder="e.g. Backtracking, Hard Arrays">
+              </div>
+              <div class="field">
+                <label for="customName">Problem Name</label>
+                <input type="text" id="customName" required placeholder="e.g. Subsets II, Edit Distance">
+              </div>
+              <div class="field">
+                <label for="customEst">Estimated Minutes</label>
+                <input type="number" id="customEst" min="5" max="300" step="5" value="25">
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn primary" type="submit">Add Problem to Roadmap</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- VIEW: SETTINGS -->
+      <section class="tab-view" id="viewSettings">
+        <div class="panel">
+          <div class="panel-title">Modify Plan Settings</div>
+          <div class="settings-grid">
+            <div class="field">
+              <label for="planStart">Plan Start Date</label>
+              <input type="date" id="planStart" value="2026-06-21">
+            </div>
+            <div class="field">
+              <label for="dailyMinutes">Daily Study Time (minutes)</label>
+              <input type="number" id="dailyMinutes" min="15" step="15" value="120">
+            </div>
+            <button class="btn primary" id="generateBtn" onclick="generateSchedule()">Recalculate & Sync Dates</button>
+          </div>
+          <div class="hint">Regenerating reschedules only unfinished problems. Completed problems keep their actual completion date.</div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <footer class="main-footer">
+    <div class="footer-content">
+      <p>DSA Tracker with MongoDB Storage &copy; 2026</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
