@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: dsa-tracker
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: MONGODB_URI
+        sync: false # Prompts the user to enter their MongoDB Atlas connection string during deployment
+      - key: JWT_SECRET
+        generateValue: true # Render will automatically generate a secure secret key
