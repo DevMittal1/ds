@@ -784,6 +784,105 @@ textarea {
   font-size: 0.8rem;
 }
 
+/* Professional Editor Styling */
+.editor-wrapper {
+  margin: 16px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  transition: var(--transition);
+}
+
+.editor-wrapper:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.editor-header {
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.editor-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.03em;
+}
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.editor-status {
+  font-size: 0.7rem;
+  color: var(--done);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  font-weight: 500;
+}
+
+.editor-status.visible {
+  opacity: 1;
+}
+
+.editor-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.editor-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.editor-textarea {
+  width: 100%;
+  border: none !important;
+  border-radius: 0 !important;
+  background: #06070a !important;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important;
+  font-size: 0.85rem !important;
+  line-height: 1.55 !important;
+  padding: 14px !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  display: block;
+  resize: vertical;
+}
+
+.editor-textarea:focus {
+  outline: none !important;
+}
+
+.theme-code .editor-textarea {
+  min-height: 150px;
+  color: #38bdf8 !important; /* light blue code */
+  border-left: 3px solid var(--accent) !important;
+}
+
+.theme-notes .editor-textarea {
+  min-height: 90px;
+  color: #cbd5e1 !important; /* light slate text */
+  border-left: 3px solid var(--warn) !important;
+}
+
 /* RESPONSIVE LAYOUT adjustments */
 @media(max-width: 768px) {
   .summary-grid {

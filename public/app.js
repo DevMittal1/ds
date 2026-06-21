@@ -392,7 +392,7 @@ function renderProblemsList() {
       catDiv.appendChild(catName);
 
       cat.items.forEach((item, iIdx) => {
-        catDiv.appendChild(buildProblemItem(item, today));
+        catDiv.appendChild(buildProblemItem(item, today, wk.week, cat.name));
       });
       body.appendChild(catDiv);
     });
@@ -410,7 +410,7 @@ function renderProblemsList() {
   });
 }
 
-function buildProblemItem(item, today) {
+function buildProblemItem(item, today, weekName = '', categoryName = '') {
   const itemDiv = document.createElement("div");
   itemDiv.className = "item" + (item.done ? " checked" : "");
 
@@ -563,35 +563,26 @@ function buildProblemItem(item, today) {
     }, 1000);
   }
 
-  // TEXTAREAS FOR CODE AND NOTES
-  const pseudoLabel = document.createElement("span");
-  pseudoLabel.className = "label-inline";
-  pseudoLabel.textContent = "Approach / Pseudocode";
-  
-  const pseudoArea = document.createElement("textarea");
-  pseudoArea.placeholder = "e.g. Sort the array, use two pointers meeting at center...";
-  pseudoArea.value = item.pseudocode;
-  pseudoArea.addEventListener("click", ev => ev.stopPropagation());
-  pseudoArea.addEventListener("blur", async () => {
-    try {
-      await apiRequest('/api/progress/details', 'POST', { problemId: item.id, pseudocode: pseudoArea.value });
-    } catch(e){}
-  });
+  // TEXTAREAS FOR CODE AND NOTES (Polished Editor-like UI Panels)
+  const pseudoEditor = createEditorWrapper(
+    "📝 Approach / Pseudocode",
+    "e.g. Sort the array, use two pointers meeting at center...",
+    item.pseudocode,
+    async (val) => {
+      await apiRequest('/api/progress/details', 'POST', { problemId: item.id, pseudocode: val });
+    },
+    'notes'
+  );
 
-  const solLabel = document.createElement("span");
-  solLabel.className = "label-inline";
-  solLabel.textContent = "Solution Code";
-  
-  const solArea = document.createElement("textarea");
-  solArea.placeholder = "Paste your clean language solution here...";
-  solArea.value = item.solution;
-  solArea.style.minHeight = "120px";
-  solArea.addEventListener("click", ev => ev.stopPropagation());
-  solArea.addEventListener("blur", async () => {
-    try {
-      await apiRequest('/api/progress/details', 'POST', { problemId: item.id, solution: solArea.value });
-    } catch(e){}
-  });
+  const solEditor = createEditorWrapper(
+    "💻 Solution Code",
+    "Paste your clean language solution here...",
+    item.solution,
+    async (val) => {
+      await apiRequest('/api/progress/details', 'POST', { problemId: item.id, solution: val });
+    },
+    'code'
+  );
 
   // FOOTER ACTIONS
   const footerRow = document.createElement("div");
@@ -641,10 +632,45 @@ function buildProblemItem(item, today) {
   completeSummary.className = "summary-line";
   completeSummary.textContent = item.completedTs ? "Completed: " + new Date(item.completedTs).toLocaleString() : "";
 
+  const chatgptBtn = document.createElement("button");
+  chatgptBtn.className = "small-btn";
+  chatgptBtn.style.color = "#10a37f";
+  chatgptBtn.style.borderColor = "rgba(16, 163, 127, 0.4)";
+  chatgptBtn.style.backgroundColor = "rgba(16, 163, 127, 0.05)";
+  chatgptBtn.innerHTML = `💬 Practice with ChatGPT`;
+  chatgptBtn.addEventListener("mouseenter", () => {
+    chatgptBtn.style.backgroundColor = "rgba(16, 163, 127, 0.15)";
+    chatgptBtn.style.borderColor = "#10a37f";
+  });
+  chatgptBtn.addEventListener("mouseleave", () => {
+    chatgptBtn.style.backgroundColor = "rgba(16, 163, 127, 0.05)";
+    chatgptBtn.style.borderColor = "rgba(16, 163, 127, 0.4)";
+  });
+  chatgptBtn.addEventListener("click", () => {
+    let promptText = `I am practicing Data Structures and Algorithms. Please act as a senior software engineering mentor and DSA coach.
+I want to practice the problem "${item.n}" in the category "${categoryName}" (${weekName}).
+Please:
+1. Explain the core patterns, optimal time/space complexity, and common gotchas for this problem without immediately giving away the complete code.
+2. Ask me questions about how I would approach this problem or what data structures I would use.
+3. Let's discuss my pseudocode and step-by-step logic first, and then build up to a clean, optimal implementation.`;
+
+    if (item.pseudocode && item.pseudocode.trim()) {
+      promptText += `\n\nHere is my current approach/pseudocode:\n"""\n${item.pseudocode.trim()}\n"""\nCan you review this approach and let me know if it's correct and optimal?`;
+    }
+    if (item.solution && item.solution.trim()) {
+      promptText += `\n\nHere is my current solution code:\n"""\n${item.solution.trim()}\n"""\nCan you check this code for correctness, time/space complexity, and clean code principles?`;
+    }
+
+    promptText += `\n\nLet's start!`;
+    const url = `https://chatgpt.com/?q=${encodeURIComponent(promptText)}`;
+    window.open(url, '_blank');
+  });
+
   const footerActionLeft = document.createElement("div");
   footerActionLeft.style.display = "flex";
   footerActionLeft.style.gap = "8px";
   footerActionLeft.appendChild(flagBtn);
+  footerActionLeft.appendChild(chatgptBtn);
   if (item.isCustom) {
     footerActionLeft.appendChild(deleteBtn);
   }
@@ -655,10 +681,8 @@ function buildProblemItem(item, today) {
   // Assemble details
   details.appendChild(grid);
   details.appendChild(timerRow);
-  details.appendChild(pseudoLabel);
-  details.appendChild(pseudoArea);
-  details.appendChild(solLabel);
-  details.appendChild(solArea);
+  details.appendChild(pseudoEditor);
+  details.appendChild(solEditor);
   details.appendChild(footerRow);
 
   // Toggle detail container open/close
@@ -848,3 +872,64 @@ document.getElementById("importFile").addEventListener("change", ev => {
 
 // Initialize app on document load
 window.addEventListener('DOMContentLoaded', initApp);
+
+// Professional Code Editor Wrapper Creator
+function createEditorWrapper(title, placeholder, value, onSave, editorType = 'code') {
+  const container = document.createElement("div");
+  container.className = "editor-wrapper " + (editorType === 'code' ? 'theme-code' : 'theme-notes');
+
+  const header = document.createElement("div");
+  header.className = "editor-header";
+
+  const titleSpan = document.createElement("span");
+  titleSpan.className = "editor-title";
+  titleSpan.textContent = title;
+
+  const actions = document.createElement("div");
+  actions.className = "editor-actions";
+
+  const status = document.createElement("span");
+  status.className = "editor-status";
+  status.textContent = "";
+
+  const copyBtn = document.createElement("button");
+  copyBtn.className = "editor-btn";
+  copyBtn.textContent = "📋 Copy";
+  copyBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(textarea.value);
+    status.textContent = "Copied!";
+    status.classList.add("visible");
+    setTimeout(() => {
+      status.classList.remove("visible");
+    }, 2000);
+  });
+
+  actions.appendChild(status);
+  actions.appendChild(copyBtn);
+  header.appendChild(titleSpan);
+  header.appendChild(actions);
+
+  const textarea = document.createElement("textarea");
+  textarea.className = "editor-textarea";
+  textarea.placeholder = placeholder;
+  textarea.value = value;
+  textarea.addEventListener("click", ev => ev.stopPropagation());
+  textarea.addEventListener("blur", async () => {
+    status.textContent = "Saving...";
+    status.classList.add("visible");
+    try {
+      await onSave(textarea.value);
+      status.textContent = "Saved";
+      setTimeout(() => {
+        status.classList.remove("visible");
+      }, 1500);
+    } catch (e) {
+      status.textContent = "Error saving";
+    }
+  });
+
+  container.appendChild(header);
+  container.appendChild(textarea);
+  return container;
+}
